@@ -12,6 +12,7 @@ use QL\QueryList;
 class curlapi{
 	public $url; //提交地址
 	public $params; //登入的post数据
+	public $postdata; //登入的post数据
 	public $cookies=""; //cookie
 	public $referer=""; //http referer
 	
@@ -40,43 +41,53 @@ class curlapi{
 	*/
 	public function login(){
 		session_start();
-		$ch=curl_init();
-
-		$headers = array();
-		$headers[] = 'X-Apple-Tz: 0';
-		$headers[] = 'X-Apple-Store-Front: 143444,12';
-		$headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-		$headers[] = 'Accept-Encoding: gzip, deflate';
-		$headers[] = 'Accept-Language: en-US,en;q=0.5';
-		$headers[] = 'Cache-Control: no-cache';
-		$headers[] = 'Content-Type: application/x-www-form-urlencoded; charset=utf-8';
-		$headers[] = 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:28.0) Gecko/20100101 Firefox/28.0';
-		$headers[] = 'X-MicrosoftAjax: Delta=true';
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-		curl_setopt($ch, CURLOPT_URL,$this -> url);
-		curl_setopt($ch, CURLOPT_HEADER,0);
-		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		curl_setopt($ch,CURLOPT_POST,1);
-		//curl_setopt($ch,CURLOPT_COOKIE,$_SESSION['cookies']);
-		curl_setopt($ch,CURLOPT_POSTFIELDS,$this -> params);
-		curl_setopt ($ch, CURLOPT_REFERER,$this -> url);
-		$result=curl_exec($ch);
-
-		if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == '200') {
-			$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-			$header = substr($result, 0, $headerSize);
-			$body = substr($result, $headerSize);
-		}
-
-		$info = curl_getinfo($ch);
+		$result = ihttp_request($this -> url, $this -> postdata, $extra = array(), $timeout = 60, $method = 'POST');
+		$Cookie = $result['headers']['Set-Cookie'];
+		$identity = explode(";", $Cookie[0]);
+		$aspxauth = explode(";", $Cookie[1]);
+		$Cookie = $identity[0].$aspxauth[0];
+		//$_SESSION['cookies'] = $Cookie;
 		echo "<pre>";
-		print_r($header);
+		print_r($Cookie);
 		echo "</pre>";
 		exit;
-		curl_close($ch);
-		return $result;
+//		$ch=curl_init();
+
+////		$headers = array();
+////		$headers[] = 'X-Apple-Tz: 0';
+////		$headers[] = 'X-Apple-Store-Front: 143444,12';
+////		$headers[] = 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+////		$headers[] = 'Accept-Encoding: gzip, deflate';
+////		$headers[] = 'Accept-Language: en-US,en;q=0.5';
+////		$headers[] = 'Cache-Control: no-cache';
+////		$headers[] = 'Content-Type: application/x-www-form-urlencoded; charset=utf-8';
+////		$headers[] = 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:28.0) Gecko/20100101 Firefox/28.0';
+////		$headers[] = 'X-MicrosoftAjax: Delta=true';
+////		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+//
+//		curl_setopt($ch, CURLOPT_URL,$this -> url);
+//		curl_setopt($ch, CURLOPT_HEADER,0);
+//		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+//		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+//		curl_setopt($ch,CURLOPT_POST,1);
+//		//curl_setopt($ch,CURLOPT_COOKIE,$_SESSION['cookies']);
+//		curl_setopt($ch,CURLOPT_POSTFIELDS,$this -> params);
+//		curl_setopt ($ch, CURLOPT_REFERER,$this -> url);
+//		$result=curl_exec($ch);
+//
+//		if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == '200') {
+//			$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+//			$header = substr($result, 0, $headerSize);
+//			$body = substr($result, $headerSize);
+//		}
+//
+//		$info = curl_getinfo($ch);
+//		echo "<pre>";
+//		print_r($result);
+//		echo "</pre>";
+//		exit;
+//		curl_close($ch);
+//		return $result;
 	}
 	
 	/*
@@ -100,26 +111,27 @@ class curlapi{
     curl模拟采集数据，会员数据
 	*/
 	public function getMembersPage(){
-		session_start();
-		$ch=curl_init();
-		curl_setopt($ch, CURLOPT_URL,$this -> url);
-		curl_setopt($ch, CURLOPT_HEADER,0);
-		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		curl_setopt($ch,CURLOPT_POST,1);
-		curl_setopt($ch,CURLOPT_COOKIE,$_SESSION['cookies']);
-		curl_setopt($ch,CURLOPT_POSTFIELDS,$this -> params);
-		curl_setopt ($ch, CURLOPT_REFERER,$this -> url);
-		curl_setopt ($ch, CURLOPT_REFERER,$this -> referer);
-		$result=curl_exec($ch);
-		curl_close($ch);
-		return $result;
+		$cookie = "__RequestVerificationToken=lg88GiqBhlN6RfN_eJY9S65NXk0yntye8UP1xlwKuHbzxtmDdc6v1QGCNBscnD-6tR5BuZZ-oz4H7cWf5ozQLnSASu7Rmvx9XiUw6Yg9jLPz1qNkbr6bSoNz_sk1; Identity=f90a64db5f0e0751d94b839a2f23a73b807c30b6ccb3c9d61b66c3b4a8a2f34746212f1de8d3718d873d0cd4ce2776ccb576f8288642ef7dd4d2c2949ec1f170993fdb1dea440fb2e7c4c7b92c447a03; .ASPXAUTH=E594BBA439C6B7EBDAB8BD2BE1797D8F7811751BA2C3669718DA2131717DC3C943D2AB4C1F0D4AEEA9E1C4D29F68B1C42B15634D71A60BB86CD5230846A1E97C183721838A4E56CA9931A4DE70D371AD4009A92129C5A4F425CFF9C0DCFB5F821D3B871E515CC35515EB928C";
+ 		$referer = 'http://vip.landee.com.cn/Customer/Customer';
+		$result = ihttp_request($this -> url, $this -> params, $extra = array(), $timeout = 60, $method = 'POST', $cookie, $referer);
+		echo "<pre>";
+		print_r($result);
+		echo "</pre>";
+		exit;
 	}
 
 	/*
 	curl模拟采集数据，会员一些详细数据
 	*/
-	public function getMembersInfos(){
+	public function getMembersInfos($cookie){
+		$result = ihttp_request($this -> url, $this -> params, $extra = array(), $timeout = 60, $method = 'POST', $cookie, $referer='');
+		$content = json_decode($result['content'], true);
+		return $content;
+		echo "<pre>";
+		print_r($content);
+		echo "</pre>";
+		exit;
+
 		session_start();
 		$ch=curl_init();
 		curl_setopt($ch, CURLOPT_URL,$this -> url);
@@ -161,118 +173,89 @@ class curlapi{
      * @param $html
      * @param $shopname
      */
-	public function downMembersCvs($html,$shopname){
-		$rules = array(
-			//采集tr中的纯文本内容
-			'other' => array('tr','html'),
-		);
-		$newdata = array();
-		$data = QueryList::Query($html, $rules)->data;
+	public function downMembersCvs($data,$shopname, $cookie){
 		$k = 0;
-		foreach ($data as &$item) {
-			$other = explode('</td>', $item['other']);
+		foreach ($data as &$customer) {
+			//获取卡信息
+			$customerId = $customer['ClientId'];
+			$url = "http://vip.landee.com.cn/Customer/Customer/CustomerCards";
+			$params = "customerId=$customerId";
+			$result = ihttp_request($url, $params, $extra = array(), $timeout = 60, $method = 'POST', $cookie, $referer='');
+			$cards = json_decode($result['content'], true);
+			echo "<pre>";
+			print_r($cards);
+			echo "</pre>";
+			exit;
 
-			if(count($other) > 15) {
-				//unset($other[0]);//去掉第一空白项
-                //unset($other[14]);//去掉14项
-                //unset($other[15]);//去掉15项
-                //unset($other[18]);//去掉15项
-				$item['other'] = $other;
-				//有几个会员卡列表
-				$counts = count($other)-1-20;
-				$rows = $counts/10+1;
+			foreach($cards as $card) {
+				//卡号
+				$newdata[$k][0] = "\t".$other; //卡号
+				$newdata[$k][1] = $other[2]; //姓名
+				$newdata[$k][2] = $other[1]; //手机号
+				$newdata[$k][3] = $other[3] == '男'?0:1; //性别
 
-				//积分
-				$k18 = 18+10*($rows-1);
-				preg_match_all('/value\=\"(.*)分\"/isU', $other[$k18], $jf);
-				$other[$k18] = isset($jf[1][0])?$jf[1][0]:0;
+				//卡类型
+				$newdata[$k][4] = $other[0]; //卡类型
 
-				foreach ($other as &$v1) {
-					$v1 = strip_tags($v1);;
-					$v1 = preg_replace("/\s\n\t/","",$v1);
-					$v1 = str_replace(' ', '', $v1);
-					$v1= trim(str_replace(PHP_EOL, '', $v1));
+				$newdata[$k][5] = $other[10]; //折扣
+
+				//卡金余额(必填),疗程,
+				$newdata[$k][6] = 0; //卡金余额
+				$newdata[$k][7] = 0; //充值总额
+				$newdata[$k][9] = 0; //消费总额
+				$newdata[$k][10] = 0; //赠送金
+
+				//卡金余额
+				$k6 = 13+10*($i-1);
+				preg_match_all('/(.*)元/isU', $other[$k6], $data1);
+				if(isset($data1[1]) && count($data1[1]) == 2) {
+					$newdata[$k][6] = str_replace('元:', '', $data1[1][0]);
+					$newdata[$k][6] = str_replace('余:次:', '', $data1[1][0]);
+					//$newdata[$k][7] = str_replace('疗程:', '', $data1[1][1]);
+				} else {
+					$newdata[$k][6] = str_replace('元', '', $other[$k6]);
+					$newdata[$k][6] = str_replace('余:次', '', $other[$k6]);
+					//$newdata[$k][7] = 0;
 				}
-				ksort($other);
 
-				for($i=1; $i<=$rows; $i++) {
-                    //卡号
-                    $k0 = 7+10*($i-1);
-					$newdata[$k][0] = "\t".$other[$k0]; //卡号
-					$newdata[$k][1] = $other[2]; //姓名
-					$newdata[$k][2] = $other[1]; //手机号
-					$newdata[$k][3] = $other[3] == '男'?0:1; //性别
+				//充值总额
+				$k7 = 11+10*($i-1);
+				$newdata[$k][7] += str_replace('元', '', $other[$k7]); //充值总额
 
-					//卡类型
-					$k7 = 9+10*($i-1);
-					$newdata[$k][4] = $other[$k7]; //卡类型
+				//消费总额
+				$k11 = 12+10*($i-1);
+				$newdata[$k][9] += str_replace('元', '', $other[$k11]); //消费总额
 
-					$newdata[$k][5] = $other[10]; //折扣
+				//赠送金
+				$k13 = 14+10*($i-1);
+				$newdata[$k][10] += str_replace('元', '', $other[$k13]); //赠送金
 
-					//卡金余额(必填),疗程,
-					$newdata[$k][6] = 0; //卡金余额
-					$newdata[$k][7] = 0; //充值总额
-					$newdata[$k][9] = 0; //消费总额
-					$newdata[$k][10] = 0; //赠送金
+				$k17 = 17+10*($rows-1);
+				$newdata[$k][8] = str_replace('次', '', $other[$k17]); //消费次数
 
-					//卡金余额
-					$k6 = 13+10*($i-1);
-					preg_match_all('/(.*)元/isU', $other[$k6], $data1);
-					if(isset($data1[1]) && count($data1[1]) == 2) {
-						$newdata[$k][6] = str_replace('元:', '', $data1[1][0]);
-						$newdata[$k][6] = str_replace('余:次:', '', $data1[1][0]);
-						//$newdata[$k][7] = str_replace('疗程:', '', $data1[1][1]);
-					} else {
-						$newdata[$k][6] = str_replace('元', '', $other[$k6]);
-						$newdata[$k][6] = str_replace('余:次', '', $other[$k6]);
-						//$newdata[$k][7] = 0;
-					}
+				$newdata[$k][11] = $other[$k18]; //积分
 
-					//充值总额
-					$k7 = 11+10*($i-1);
-					$newdata[$k][7] += str_replace('元', '', $other[$k7]); //充值总额
+				$newdata[$k][12] = 0; //开卡时间
 
-					//消费总额
-					$k11 = 12+10*($i-1);
-					$newdata[$k][9] += str_replace('元', '', $other[$k11]); //消费总额
+				//日期格式转换
+				$date1 = substr($other[5], 0, 3).' '.substr($other[5], 3, 3).' '.substr($other[5], 19, 4);
+				$date1 = date('Y-m-d', strtotime($date1));
 
-					//赠送金
-					$k13 = 14+10*($i-1);
-					$newdata[$k][10] += str_replace('元', '', $other[$k13]); //赠送金
+				$k19 = 19+10*($rows-1);
+				$date2 = substr($other[$k19], 0, 3).' '.substr($other[$k19], 3, 3).' '.substr($other[$k19], 19, 4);
 
-					$k17 = 17+10*($rows-1);
-					$newdata[$k][8] = str_replace('次', '', $other[$k17]); //消费次数
+				$date2 = date('Y-m-d', strtotime($date2));
+				$newdata[$k][13] = $date1; //最后消费时间
+				$newdata[$k][14] = $date2 == '1970-01-01'?$date1:$date2; //生日
+				$newdata[$k][15] = ''; //会员备注
+				ksort($newdata[$k]);
 
-					$newdata[$k][11] = $other[$k18]; //积分
-
-					$newdata[$k][12] = 0; //开卡时间
-
-					//日期格式转换
-					$date1 = substr($other[5], 0, 3).' '.substr($other[5], 3, 3).' '.substr($other[5], 19, 4);
-					$date1 = date('Y-m-d', strtotime($date1));
-
-					$k19 = 19+10*($rows-1);
-					$date2 = substr($other[$k19], 0, 3).' '.substr($other[$k19], 3, 3).' '.substr($other[$k19], 19, 4);
-
-					$date2 = date('Y-m-d', strtotime($date2));
-					$newdata[$k][13] = $date1; //最后消费时间
-					$newdata[$k][14] = $date2 == '1970-01-01'?$date1:$date2; //生日
-					$newdata[$k][15] = ''; //会员备注
-					ksort($newdata[$k]);
-					$k = $k+$i;
-				}
-				/*
-				if(preg_match('/余/isU', $newdata[$k][6])) {
-					$tmp = explode('余', $newdata[$k][6]);
-					$newdata[$k][6] = $tmp[0];
-				}
-				*/
 				$k++;
 			}
 		}
 
 		//导出CVS
-		$cvsstr = "卡号(必填[唯一]),姓名(必填),手机号(必填[唯一]),性别(必填[“0”代表男，“1”代表女]),卡类型(必填[系统编号]),折扣(必填),卡金余额(必填),充值总额,消费次数,消费总额,赠送金,积分,欠款,开卡时间(格式：YYYY-mm-dd),最后消费时间(格式：YYYY-mm-dd),生日(格式：YYYY-mm-dd),会员备注\n";
+		$cvsstr = "卡号(必填[唯一]),姓名(必填),手机号(必填[唯一]),性别(必填[“0”代表男，“1”代表女]),卡类型(必填[系统编号]),折扣(必填),卡金余额(必填),充值总额,消费次数,消费总额,赠送金,积分,欠款,开卡时间(格式：YYYY-mm-dd),最后消费时间(格式：YYYY-mm-dd),生日(格式：YYYY-mm-dd),生日类型（1阳历，0阴历）,会员备注\n";
 		$filename = $shopname.'_会员信息.csv';
 		$cvsstr = iconv('utf-8','gb2312//ignore',$cvsstr);
 
@@ -531,6 +514,189 @@ class curlapi{
 		header('Pragma:public');
 		echo $cvsstr;
 	}
+
 }
 
+/**
+ * Http协议
+ *
+ * [WDL] Copyright (c) 2013 B2CTUI.COM
+ */
+function ihttp_request($url, $post = '', $extra = array(), $timeout = 60, $method = 'GET', $cookie = '', $referer = '') {
+	$urlset = parse_url($url);
+	if(empty($urlset['path'])) {
+		$urlset['path'] = '/';
+	}
+	if(!empty($urlset['query'])) {
+		$urlset['query'] = "?{$urlset['query']}";
+	} else {
+		$urlset['query'] = '';
+	}
+	if(empty($urlset['port'])) {
+		$urlset['port'] = $urlset['scheme'] == 'https' ? '443' : '80';
+	}
+	if (strexists($url, 'https://') && !extension_loaded('openssl')) {
+		if (!extension_loaded("openssl")) {
+			return json_encode(['status' => false, 'msg' => '请开启您PHP环境的openssl']);
+			//message('请开启您PHP环境的openssl');
+		}
+	}
+	if(function_exists('curl_init') && function_exists('curl_exec')) {
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $urlset['scheme']. '://' .$urlset['host'].($urlset['port'] == '80' ? '' : ':'.$urlset['port']).$urlset['path'].$urlset['query']);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_HEADER, 1);
+		if($post) {
+			curl_setopt($ch, CURLOPT_POST, 1);
+			if (is_array($post)) {
+				$post = http_build_query($post);
+			}
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+		}
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSLVERSION, 1);
+
+		if($cookie != ''){
+			curl_setopt($ch,CURLOPT_COOKIE,$cookie);
+		}
+		if($referer != ''){
+			//curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+			curl_setopt ($ch, CURLOPT_REFERER, $referer);
+
+		}
+		if (defined('CURL_SSLVERSION_TLSv1')) {
+			curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
+		}
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:9.0.1) Gecko/20100101 Firefox/9.0.1');
+		if (!empty($extra) && is_array($extra)) {
+			$headers = array();
+			foreach ($extra as $opt => $value) {
+				if (strexists($opt, 'CURLOPT_')) {
+					curl_setopt($ch, constant($opt), $value);
+				} elseif (is_numeric($opt)) {
+					curl_setopt($ch, $opt, $value);
+				} else {
+					$headers[] = "{$opt}: {$value}";
+				}
+			}
+			if(!empty($headers)) {
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+			}
+		}
+		$data = curl_exec($ch);
+		$status = curl_getinfo($ch);
+		$errno = curl_errno($ch);
+		$error = curl_error($ch);
+		curl_close($ch);
+		if($errno || empty($data)) {
+			return error(1, $error);
+		} else {
+			return ihttp_response_parse($data);
+		}
+	}
+	//$method = empty($post) ? 'GET' : 'POST';
+	$fdata = "{$method} {$urlset['path']}{$urlset['query']} HTTP/1.1\r\n";
+	$fdata .= "Host: {$urlset['host']}\r\n";
+	if(function_exists('gzdecode')) {
+		$fdata .= "Accept-Encoding: gzip, deflate\r\n";
+	}
+	$fdata .= "Connection: close\r\n";
+	if (!empty($extra) && is_array($extra)) {
+		foreach ($extra as $opt => $value) {
+			if (!strexists($opt, 'CURLOPT_')) {
+				$fdata .= "{$opt}: {$value}\r\n";
+			}
+		}
+	}
+	$body = '';
+	if ($post) {
+		if (is_array($post)) {
+			$body = http_build_query($post);
+		} else {
+			$body = urlencode($post);
+		}
+		$fdata .= 'Content-Length: ' . strlen($body) . "\r\n\r\n{$body}";
+	} else {
+		$fdata .= "\r\n";
+	}
+	if($urlset['scheme'] == 'https') {
+		$fp = fsockopen('ssl://' . $urlset['host'], $urlset['port'], $errno, $error);
+	} else {
+		$fp = fsockopen($urlset['host'], $urlset['port'], $errno, $error);
+	}
+	stream_set_blocking($fp, true);
+	stream_set_timeout($fp, $timeout);
+	if (!$fp) {
+		return error(1, $error);
+	} else {
+		fwrite($fp, $fdata);
+		$content = '';
+		while (!feof($fp))
+			$content .= fgets($fp, 512);
+		fclose($fp);
+		return ihttp_response_parse($content, true);
+	}
+}
+
+function ihttp_response_parse($data, $chunked = false) {
+	$rlt = array();
+	$pos = strpos($data, "\r\n\r\n");
+	$split1[0] = substr($data, 0, $pos);
+	$split1[1] = substr($data, $pos + 4, strlen($data));
+
+	$split2 = explode("\r\n", $split1[0], 2);
+	preg_match('/^(\S+) (\S+) (\S+)$/', $split2[0], $matches);
+	$rlt['code'] = $matches[2];
+	$rlt['status'] = $matches[3];
+	$rlt['responseline'] = $split2[0];
+	$header = explode("\r\n", $split2[1]);
+	$isgzip = false;
+	$ischunk = false;
+	foreach ($header as $v) {
+		$row = explode(':', $v);
+		$key = trim($row[0]);
+		$value = trim($row[1]);
+		if (isset($rlt['headers'][$key]) && is_array($rlt['headers'][$key])) {
+			$rlt['headers'][$key][] = $value;
+		} elseif (isset($rlt['headers'][$key]) && !empty($rlt['headers'][$key])) {
+			$temp = $rlt['headers'][$key];
+			unset($rlt['headers'][$key]);
+			$rlt['headers'][$key][] = $temp;
+			$rlt['headers'][$key][] = $value;
+		} else {
+			$rlt['headers'][$key] = $value;
+		}
+		if(!$isgzip && strtolower($key) == 'content-encoding' && strtolower($value) == 'gzip') {
+			$isgzip = true;
+		}
+		if(!$ischunk && strtolower($key) == 'transfer-encoding' && strtolower($value) == 'chunked') {
+			$ischunk = true;
+		}
+	}
+	if($chunked && $ischunk) {
+		$rlt['content'] = ihttp_response_parse_unchunk($split1[1]);
+	} else {
+		$rlt['content'] = $split1[1];
+	}
+	if($isgzip && function_exists('gzdecode')) {
+		$rlt['content'] = gzdecode($rlt['content']);
+	}
+
+	$rlt['meta'] = $data;
+	if($rlt['code'] == '100') {
+		return ihttp_response_parse($rlt['content']);
+	}
+	return $rlt;
+}
+
+/**
+ * 是否包含子串
+ */
+
+function strexists($string, $find) {
+	return !(strpos($string, $find) === FALSE);
+}
 ?>
